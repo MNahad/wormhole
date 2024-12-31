@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=75.6.0", "setuptools_scm>=8.1.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wormhole"
+dynamic = ["version"]
+requires-python = ">=3.12"
+dependencies = [
+  "astropy>=7.0.0",
+  "jax>=0.4.24",
+  "flax>=0.8.0",
+  "flaxoil@git+https://github.com/mnahad/flaxoil.git@main",
+  "pyarrow>=18.1.0",
+]
+authors = [
+  { name="Mohammed Nawabuddin", email="MNahad@users.noreply.github.com" },
+]
+description = "Exoplanet detection with flaxoil"
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+  "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Repository = "https://github.com/mnahad/wormhole"
+
+[tool.setuptools_scm]
