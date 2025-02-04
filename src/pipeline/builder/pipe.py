@@ -1,6 +1,7 @@
 # Copyright 2024 Mohammed Nawabuddin
 # SPDX-License-Identifier: Apache-2.0
 
+from os import path
 from typing import Callable
 
 from common.fs import iter_files, make_dir
@@ -12,13 +13,13 @@ class ETLPipe[T]:
     sink: str
     extractor: Callable[[str, str], T]
     transformers: tuple[Callable[[T], T], ...]
-    loader: Callable[[T, str], None]
+    loader: Callable[[T, str, str], None]
 
     def __init__(
         self,
         extractor: Callable[[str, str], T],
         transformers: tuple[Callable[[T], T], ...],
-        loader: Callable[[T, str], None],
+        loader: Callable[[T, str, str], None],
         source: str,
         sink: str,
     ) -> None:
@@ -30,20 +31,19 @@ class ETLPipe[T]:
 
     def run(self) -> None:
 
-        def extractor() -> Callable[[str], T]:
-            return lambda file: self.extractor(file, self.source)
+        def extractor(file: str) -> Callable[[None], T]:
+            return lambda _: self.extractor(file, self.source)
 
-        def loader() -> Callable[[T], None]:
-            return lambda data: self.loader(data, self.sink)
+        def loader(file: str) -> Callable[[T], None]:
+            return lambda data: self.loader(data, file, self.sink)
 
-        def piped() -> Callable[[str], None]:
+        def piped(file: str) -> Callable[[None], None]:
             return chain(
-                extractor(),
+                extractor(file),
                 *self.transformers,
-                f_final=loader(),
+                f_final=loader(file),
             )
 
         make_dir(self.sink)
-        piped_f = piped()
         for file in iter_files(self.source):
-            piped_f(file)
+            piped(path.basename(file))(None)

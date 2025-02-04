@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from os import listdir, makedirs, path
-from typing import Iterator
+from typing import Callable, Iterator, Optional
 
 
 def make_dir(dir: str) -> None:
@@ -10,20 +10,22 @@ def make_dir(dir: str) -> None:
         makedirs(dir)
 
 
-def iter_files(dir: str) -> Iterator[str]:
-    for file in [
+def iter_files(
+    dir: str,
+    predicate: Optional[Callable[[str], bool]] = None,
+) -> Iterator[str]:
+    predicate = predicate if predicate else lambda file: path.isfile(file)
+    return (
         path.abspath(path.join(dir, file))
         for file in sorted(listdir(path.abspath(dir)))
-    ]:
-        if not path.isfile(file):
-            continue
-        yield file
+        if predicate(path.abspath(path.join(dir, file)))
+    )
 
 
 def swap_dir_of_file(
     file: str,
     new_dir: str,
-    new_ext: str | None = None,
+    new_ext: Optional[str] = None,
 ) -> str:
     new_file = path.abspath(path.join(new_dir, path.basename(file)))
     if new_ext:

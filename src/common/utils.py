@@ -1,7 +1,7 @@
 # Copyright 2024 Mohammed Nawabuddin
 # SPDX-License-Identifier: Apache-2.0
 
-from functools import reduce
+from functools import reduce, wraps
 from itertools import filterfalse
 import re
 from typing import Callable, Iterable, Iterator
@@ -51,3 +51,12 @@ def unique(
             continue
         uniques.add(element[key])
         yield element
+
+
+def iterate[T](fn: Callable[[T], T]) -> Callable[[Iterable[T]], Iterator[T]]:
+
+    @wraps(fn)
+    def wrapper(it: Iterable[T]) -> Iterator[T]:
+        return (fn(t) for t in it)
+
+    return wrapper
