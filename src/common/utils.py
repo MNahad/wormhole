@@ -53,6 +53,18 @@ def unique(
         yield element
 
 
+def collect_dict[
+    **P,
+    Q,
+](fn: Callable[P, Iterator[tuple[str, Q]]]) -> Callable[P, dict[str, Q]]:
+
+    @wraps(fn)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> dict[str, Q]:
+        return {k: v for k, v in fn(*args, **kwargs)}
+
+    return wrapper
+
+
 def iterate[T](fn: Callable[[T], T]) -> Callable[[Iterable[T]], Iterator[T]]:
 
     @wraps(fn)

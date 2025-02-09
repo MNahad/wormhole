@@ -6,7 +6,10 @@ from typing import Iterator
 from astropy.io import fits
 from jax import Array, numpy as jnp
 
+from .utils import collect_dict
 
+
+@collect_dict
 def download(
     url: str,
     ext: int,

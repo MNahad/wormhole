@@ -166,7 +166,7 @@ class MetaDataset:
         tce_table = tce_table.append_column(
             "has_tce",
             pa.array(
-                (True for _ in range(len(tce_table))),
+                (True for _ in range(tce_table.num_rows)),
                 type=pa.bool_(),
             ),
         )
@@ -184,8 +184,9 @@ class MetaDataset:
         )
 
     def save(self) -> None:
-        dir = path.join(self.dataset_dir, path.dirname(self._cache_path))
-        make_dir(dir)
+        make_dir(
+            dir := path.join(self.dataset_dir, path.dirname(self._cache_path))
+        )
         csv.write_csv(
             self.dataset,
             path.abspath(path.join(dir, path.basename(self._cache_path))),
