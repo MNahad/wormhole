@@ -9,11 +9,11 @@ from os import path
 
 from jax import Array
 import pyarrow as pa
-from pyarrow import csv
 
 import common.async_wrapper as async_wrapper
 import common.fits as fits
 from common.fs import make_dir
+import common.pa_files as pa_files
 
 type Sector = pa.UInt8Scalar
 type Ticid = pa.UInt64Scalar
@@ -90,17 +90,14 @@ class LightCurveStore:
         cache_path: str,
     ) -> None:
         sector, ticid, url = meta
-        keys = data_keys
         if not LightCurveStore._is_cached(sector, ticid, lc_dir, cache_path):
-            lc = fits.download(url.as_py(), 1, keys)
+            lc = fits.download(url.as_py(), 1, data_keys)
             LightCurveStore._cache(sector, ticid, lc, lc_dir, cache_path)
 
     def __post_init__(self) -> None:
-        self._meta = csv.read_csv(
-            path.abspath(path.join(self.manifest_dir, self._manifest_path)),
-            convert_options=csv.ConvertOptions(
-                column_types=pa.schema(self._meta_schema),
-            ),
+        self._meta = pa_files.read_csv(
+            path.join(self.manifest_dir, self._manifest_path),
+            self._meta_schema,
         )
         make_dir(cache_dir := path.join(self.lc_dir, self._cache_path))
         for sector in self._meta["sector"].unique():

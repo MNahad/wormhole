@@ -4,6 +4,6 @@
 from connectors.stsci.bulk_fetcher import STScI
 
 
-def bulk_fetch(bronze_dir: str) -> None:
+def bulk_data_fetch(bronze_dir: str) -> None:
     stsci_client = STScI(bronze_dir)
     stsci_client.download()

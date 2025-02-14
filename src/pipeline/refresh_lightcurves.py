@@ -4,6 +4,11 @@
 from connectors.stsci.lc_store import LightCurveStore
 
 
-def refresh_lc_store(bronze_dir: str, silver_dir: str, /, debug=False) -> None:
-    lc_store = LightCurveStore(bronze_dir, silver_dir)
+def refresh_lightcurve_store(
+    silver_dir: str,
+    gold_dir: str,
+    /,
+    debug=False,
+) -> None:
+    lc_store = LightCurveStore(gold_dir, silver_dir)
     lc_store.download(debug=debug)

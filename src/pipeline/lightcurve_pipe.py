@@ -9,10 +9,6 @@ from .stages import lightcurve_stages as stages
 
 
 def process_lightcurves(silver_dir: str, gold_dir: str) -> None:
-    _process_lcs(silver_dir, gold_dir)
-
-
-def _process_lcs(silver_dir: str, gold_dir: str) -> None:
     curves_in_dir = path.abspath(path.join(silver_dir, "lc", "curves"))
     curves_out_dir = path.abspath(path.join(gold_dir, "lc", "curves"))
     for sector_dir in iter_files(curves_in_dir, lambda dir: path.isdir(dir)):
