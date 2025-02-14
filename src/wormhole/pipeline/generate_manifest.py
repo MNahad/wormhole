@@ -5,9 +5,9 @@ from os import path
 
 import pyarrow as pa
 
-from common.fs import make_dir
-import common.pa_files as pa_files
-from dataset import MetaDataset
+from wormhole.common.fs import make_dir
+import wormhole.common.pa_files as pa_files
+from wormhole.dataset import MetaDataset
 
 
 def generate_lightcurve_manifest(

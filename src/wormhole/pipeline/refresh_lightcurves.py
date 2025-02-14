@@ -1,7 +1,7 @@
 # Copyright 2024 Mohammed Nawabuddin
 # SPDX-License-Identifier: Apache-2.0
 
-from connectors.stsci.lc_store import LightCurveStore
+from wormhole.connectors.stsci.lc_store import LightCurveStore
 
 
 def refresh_lightcurve_store(

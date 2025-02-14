@@ -10,10 +10,10 @@ from os import path
 from jax import Array
 import pyarrow as pa
 
-import common.async_wrapper as async_wrapper
-import common.fits as fits
-from common.fs import make_dir
-import common.pa_files as pa_files
+import wormhole.common.async_wrapper as async_wrapper
+import wormhole.common.fits as fits
+from wormhole.common.fs import make_dir
+import wormhole.common.pa_files as pa_files
 
 type Sector = pa.UInt8Scalar
 type Ticid = pa.UInt64Scalar

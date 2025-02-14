@@ -3,7 +3,7 @@
 
 from os import path
 
-from common.fs import iter_files
+from wormhole.common.fs import iter_files
 from .builder.pipe import ETLPipe
 from .stages import lightcurve_stages as stages
 

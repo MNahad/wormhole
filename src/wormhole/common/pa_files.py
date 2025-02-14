@@ -6,7 +6,7 @@ from os import path
 import pyarrow as pa
 from pyarrow import csv
 
-from common.fs import iter_files
+from wormhole.common.fs import iter_files
 
 
 def read_csv(target_path: str, schema: dict[str, pa.DataType]) -> pa.Table:

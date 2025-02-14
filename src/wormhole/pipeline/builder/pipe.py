@@ -4,8 +4,8 @@
 from os import path
 from typing import Callable
 
-from common.fs import iter_files, make_dir
-from common.utils import chain
+from wormhole.common.fs import iter_files, make_dir
+from wormhole.common.utils import chain
 
 
 def ETLPipe[

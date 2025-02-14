@@ -5,8 +5,8 @@ from os import path
 
 import pyarrow as pa
 
-from common.fs import make_dir
-import common.pa_files as pa_files
+from wormhole.common.fs import make_dir
+import wormhole.common.pa_files as pa_files
 
 
 def generate_full_dataset(silver_dir: str, gold_dir: str) -> None:

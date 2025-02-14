@@ -5,9 +5,9 @@ from os import path
 import re
 from typing import Iterable
 
-import common.csv_files as csv
-from common.fs import swap_dir_of_file, yield_file
-from common.utils import filter_no_prefix, match_substring, unique
+import wormhole.common.csv_files as csv
+from wormhole.common.fs import swap_dir_of_file, yield_file
+from wormhole.common.utils import filter_no_prefix, match_substring, unique
 
 type Pipe = Iterable[dict[str, str]]
 

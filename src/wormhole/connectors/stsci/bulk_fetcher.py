@@ -5,8 +5,8 @@ from dataclasses import dataclass, field
 from os import path
 from typing import Optional
 
-from common.fs import make_dir
-from common.http import Http
+from wormhole.common.fs import make_dir
+from wormhole.common.http import Http
 
 
 @dataclass

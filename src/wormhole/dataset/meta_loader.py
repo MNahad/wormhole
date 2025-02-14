@@ -9,7 +9,7 @@ from jax import Array, numpy as jnp, random
 import pyarrow as pa
 from pyarrow import compute as pc
 
-import common.pa_files as pa_files
+import wormhole.common.pa_files as pa_files
 
 
 @dataclass

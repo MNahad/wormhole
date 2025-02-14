@@ -7,8 +7,8 @@ from typing import Iterable
 
 from jax import Array, jit, numpy as jnp
 
-import common.fits as fits
-from common.utils import iterate
+import wormhole.common.fits as fits
+from wormhole.common.utils import iterate
 
 type LC = dict[str, Array]
 type Pipe = Iterable[LC]
