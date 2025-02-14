@@ -35,4 +35,4 @@ def _run_pipe(read_dir: str, write_dir: str) -> None:
         read_dir,
         write_dir,
     )
-    pipe.run()
+    pipe()

@@ -20,7 +20,7 @@ def _generate_lc_csv(bronze_dir: str, silver_dir: str) -> None:
         path.abspath(path.join(bronze_dir, "lc", "scripts")),
         path.abspath(path.join(silver_dir, "lc", "meta")),
     )
-    pipe.run()
+    pipe()
 
 
 def _generate_tce_csv(bronze_dir: str, silver_dir: str) -> None:
@@ -31,4 +31,4 @@ def _generate_tce_csv(bronze_dir: str, silver_dir: str) -> None:
         path.abspath(path.join(bronze_dir, "tce", "csvs")),
         path.abspath(path.join(silver_dir, "tce", "events")),
     )
-    pipe.run()
+    pipe()
