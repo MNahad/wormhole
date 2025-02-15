@@ -9,7 +9,7 @@ from wormhole.common.fs import make_dir
 import wormhole.common.pa_files as pa_files
 
 
-def generate_full_dataset(silver_dir: str, gold_dir: str) -> None:
+def join_datasets(silver_dir: str, gold_dir: str) -> None:
     lc_path = path.join(silver_dir, "lc", "meta")
     tce_path = path.join(silver_dir, "tce", "events")
     dataset_path = "lc/dataset/dataset.csv"

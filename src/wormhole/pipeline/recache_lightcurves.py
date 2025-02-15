@@ -4,7 +4,7 @@
 from wormhole.connectors.stsci.lc_store import LightCurveStore
 
 
-def refresh_lightcurve_store(
+def recache_lightcurve_store(
     silver_dir: str,
     gold_dir: str,
     /,
