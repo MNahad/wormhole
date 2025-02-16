@@ -4,13 +4,18 @@
 from os import path
 
 from wormhole.common.fs import iter_files
+from wormhole.config import config
 from .builder.pipe import ETLPipe
 from .stages import lightcurve_stages as stages
 
 
 def process_lightcurves(silver_dir: str, gold_dir: str) -> None:
-    curves_in_dir = path.abspath(path.join(silver_dir, "lc", "curves"))
-    curves_out_dir = path.abspath(path.join(gold_dir, "lc", "curves"))
+    curves_in_dir = path.abspath(
+        path.join(silver_dir, *config()["data"]["catalogue"]["lc"]["path"])
+    )
+    curves_out_dir = path.abspath(
+        path.join(gold_dir, *config()["data"]["catalogue"]["lc"]["path"])
+    )
     for sector_dir in iter_files(curves_in_dir, lambda dir: path.isdir(dir)):
         _run_pipe(
             sector_dir,

@@ -14,6 +14,7 @@ import wormhole.common.async_wrapper as async_wrapper
 import wormhole.common.fits as fits
 from wormhole.common.fs import make_dir
 import wormhole.common.pa_files as pa_files
+from wormhole.config import config
 
 type Sector = pa.UInt8Scalar
 type Ticid = pa.UInt64Scalar
@@ -34,8 +35,21 @@ class LightCurveStore:
         },
         init=False,
     )
-    _manifest_path: str = field(default="lc/manifest/manifest.csv", init=False)
-    _cache_path: str = field(default="lc/curves/", init=False)
+    _manifest_path: str = field(
+        default_factory=lambda: path.join(
+            *(
+                config()["data"]["catalogue"]["lc_manifest"]["path"]
+                + ("manifest.csv",)
+            )
+        ),
+        init=False,
+    )
+    _cache_path: str = field(
+        default_factory=lambda: path.join(
+            *config()["data"]["catalogue"]["lc"]["path"]
+        ),
+        init=False,
+    )
     _data_keys: list[str] = field(
         default_factory=lambda: [
             "TIME",
@@ -44,7 +58,10 @@ class LightCurveStore:
         ],
         init=False,
     )
-    _async_batch_size: int = field(default=100, init=False)
+    _async_batch_size: int = field(
+        default_factory=lambda: config()["async"]["batch_size"],
+        init=False,
+    )
 
     @staticmethod
     def _is_cached(

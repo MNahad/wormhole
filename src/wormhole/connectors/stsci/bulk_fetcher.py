@@ -7,6 +7,7 @@ from typing import Optional
 
 from wormhole.common.fs import make_dir
 from wormhole.common.http import Http
+from wormhole.config import config
 
 
 @dataclass
@@ -23,12 +24,14 @@ class ContextManager:
             "tesscurl_sector_{}_fast-lc.sh",
         )
     )
-    lc_base_subdir: str = field(default="scripts/")
-    lc_fast_subdir: str = field(default="fast_scripts/")
+    lc_base_subdir: str = field(
+        default_factory=lambda: path.join(
+            *config()["data"]["catalogue"]["bulk_lc"]["path"]
+        )
+    )
     lc_max_sector: int = field(default=26)
     lc_fast_sector_start: int = field(default=27)
     tce_base_path: str = field(default="/missions/tess/catalogs/tce")
-    tce_base_subdir: str = field(default="csvs/")
     tce_files: list[str] = field(
         default_factory=lambda: [
             "tess2018206190142-s0001-s0001_dvr-tcestats.csv",
@@ -59,39 +62,31 @@ class ContextManager:
             "tess2020161181517-s0026-s0026_dvr-tcestats.csv",
         ]
     )
+    tce_base_subdir: str = field(
+        default_factory=lambda: path.join(
+            *config()["data"]["catalogue"]["bulk_tce"]["path"]
+        )
+    )
 
 
 class STScI:
-    lc_out_path: str
-    tce_out_path: str
+    out_dir: str
     client: Http
     context: ContextManager
 
     def __init__(
         self,
         out_dir: str,
-        host: str = "archive.stsci.edu",
+        host: Optional[str] = None,
         context: Optional[ContextManager] = None,
     ) -> None:
-        self.lc_out_path = path.abspath(path.join(out_dir, "lc/"))
-        self.tce_out_path = path.abspath(path.join(out_dir, "tce/"))
-        self.client = Http(host)
+        self.out_dir = out_dir
+        self.client = Http(host if host else config()["urls"]["bulk"]["host"])
         self.context = context if context else ContextManager()
 
     def download(self) -> None:
-        script_paths = [
-            path.join(self.lc_out_path, dir)
-            for dir in [
-                self.context.lc_base_subdir,
-                self.context.lc_fast_subdir,
-            ]
-        ]
-        for script_path in script_paths:
-            make_dir(script_path)
-        lc_out_dir = path.join(self.lc_out_path, self.context.lc_base_subdir)
-        lc_fast_out_dir = path.join(
-            self.lc_out_path, self.context.lc_fast_subdir
-        )
+        lc_out_dir = path.join(self.out_dir, self.context.lc_base_subdir)
+        make_dir(lc_out_dir)
         for i in range(self.context.lc_max_sector):
             url_file = self.context.lc_base_path_pattern[1].format(i + 1)
             self.client.get(
@@ -104,11 +99,9 @@ class STScI:
                 )
                 self.client.get(
                     self.context.lc_fast_path_pattern[0] + fast_url_file,
-                    path.join(lc_fast_out_dir, fast_url_file),
+                    path.join(lc_out_dir, fast_url_file),
                 )
-        tce_out_dir = path.join(
-            self.tce_out_path, self.context.tce_base_subdir
-        )
+        tce_out_dir = path.join(self.out_dir, self.context.tce_base_subdir)
         make_dir(tce_out_dir)
         for file in self.context.tce_files:
             self.client.get(

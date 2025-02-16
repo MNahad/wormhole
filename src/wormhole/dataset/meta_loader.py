@@ -10,6 +10,7 @@ import pyarrow as pa
 from pyarrow import compute as pc
 
 import wormhole.common.pa_files as pa_files
+from wormhole.config import config
 
 
 @dataclass
@@ -25,7 +26,15 @@ class MetaDataset:
         },
         init=False,
     )
-    _cache_path: str = field(default="lc/dataset/dataset.csv", init=False)
+    _cache_path: str = field(
+        default_factory=lambda: path.join(
+            *(
+                config()["data"]["catalogue"]["metadataset"]["path"]
+                + ("metadataset.csv",)
+            )
+        ),
+        init=False,
+    )
     _indices: tuple[int, int] = field(
         default_factory=lambda: (0, 0),
         init=False,

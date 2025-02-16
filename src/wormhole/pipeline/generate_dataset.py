@@ -7,12 +7,24 @@ import pyarrow as pa
 
 from wormhole.common.fs import make_dir
 import wormhole.common.pa_files as pa_files
+from wormhole.config import config
 
 
 def join_datasets(silver_dir: str, gold_dir: str) -> None:
-    lc_path = path.join(silver_dir, "lc", "meta")
-    tce_path = path.join(silver_dir, "tce", "events")
-    dataset_path = "lc/dataset/dataset.csv"
+    lc_path = path.join(
+        silver_dir,
+        *config()["data"]["catalogue"]["lc_metadata"]["path"],
+    )
+    tce_path = path.join(
+        silver_dir,
+        *config()["data"]["catalogue"]["tce_metadata"]["path"],
+    )
+    dataset_path = path.join(
+        *(
+            config()["data"]["catalogue"]["metadataset"]["path"]
+            + ("metadataset.csv",)
+        )
+    )
     schema = {
         "sector": pa.uint8(),
         "ticid": pa.uint64(),
