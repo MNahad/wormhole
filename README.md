@@ -11,9 +11,9 @@ The [Transiting Exoplanet Survey Satellite](https://en.wikipedia.org/wiki/Transi
 
 Data from the mission is hosted at [MAST](https://archive.stsci.edu/missions-and-data/tess).
 
-Photometric data products include time-series of full-frame CCD sensor images, time-series of selected pixels around target stars taken at faster cadences, and flux time-series generated from aperture photometry on these target pixels. MAST also hosts Planet Search data products such as data on detected threshold crossing events.
+Photometric data products include time-series of full-frame CCD sensor images, time-series of selected pixels around target stars taken at faster cadences, and flux time-series generated from aperture photometry on these target pixels. MAST also hosts Planet Search data products such as statistics on detected threshold crossing events.
 
-This project uses data products from the Primary Mission (Year 1 and 2), specifically: Light Curve (LC) data consisting on the flux time-series, and Threshold Crossing Event (TCE) data to generate classification labels for training.
+This project uses data products from the Primary Mission (Year 1 and 2), specifically: Light Curve (LC) data consisting of the flux time-series, and Threshold Crossing Event (TCE) data to generate classification labels for training.
 
 # What is Flaxoil?
 
