@@ -5,9 +5,13 @@
 
 This repository contains in-progress work  on building a Flaxoil model which can classify exoplanets in the TESS Lightcurve dataset.
 
-## What is TESS?
+# Project status
 
-The [Transiting Exoplanet Survey Satellite](https://en.wikipedia.org/wiki/Transiting_Exoplanet_Survey_Satellite) was launched on 18 April 2018 on an all-sky survey mission to detect transiting exoplanets.
+This project is currently a Work-In-Progress. Expect updates as the project carries on.
+
+# What is TESS?
+
+The [Transiting Exoplanet Survey Satellite](https://en.wikipedia.org/wiki/Transiting_Exoplanet_Survey_Satellite) was launched on 18 April 2018 on an MIT-Led NASA all-sky survey mission to detect transiting exoplanets.
 
 Data from the mission is hosted at [MAST](https://archive.stsci.edu/missions-and-data/tess).
 
@@ -17,7 +21,7 @@ This project uses data products from the Primary Mission (Year 1 and 2), specifi
 
 # What is Flaxoil?
 
-[Flaxoil](https://github.com/MNahad/flaxoil) is a port of the [ncps](https://github.com/mlech26l/keras-ncp) Python package, which itself is an implementation of Liquid Neural Networks [1] [2].
+[Flaxoil](https://github.com/MNahad/flaxoil) is a port of the [ncps](https://github.com/mlech26l/keras-ncp) Python package, which itself is an implementation of Liquid Neural Networks [1] [2] developed at MIT.
 
 A Liquid Neural Network is a novel ML algorithm that is bio-inspired by the brain of the _C. Elegans_ nematode. The network contains sparsely-connected RNN-based ODE solver cells, mimicing the roundworm's neural synapses.
 
