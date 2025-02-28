@@ -8,7 +8,7 @@ from .builder.pipe import ETLPipe
 from .stages import metadataset_stages as stages
 
 
-def process_metadataset(bronze_dir: str, silver_dir: str) -> None:
+def process_metadataset(bronze_dir: str, silver_dir: str, **kwargs) -> None:
     _generate_lc_csv(bronze_dir, silver_dir)
     _generate_tce_csv(bronze_dir, silver_dir)
 

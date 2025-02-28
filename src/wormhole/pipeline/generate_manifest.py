@@ -11,12 +11,9 @@ from wormhole.config import config
 from wormhole.dataset import MetaDataset
 
 
-def generate_lightcurve_manifest(
-    gold_dir: str,
-    /,
-    tce_ratio: tuple[int, int] = (20_000, 20_000),
-) -> None:
+def generate_lightcurve_manifest(gold_dir: str, **kwargs) -> None:
     meta_dataset = MetaDataset(gold_dir)
+    tce_ratio = config()["pipelines"]["args"]["tce_ratio"]
     positives, negatives = meta_dataset.take(tce_ratio, shuffle=True)
     manifest_path = path.join(
         *(

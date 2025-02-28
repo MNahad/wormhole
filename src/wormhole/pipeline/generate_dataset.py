@@ -10,7 +10,7 @@ import wormhole.common.pa_files as pa_files
 from wormhole.config import config
 
 
-def join_datasets(silver_dir: str, gold_dir: str) -> None:
+def join_datasets(silver_dir: str, gold_dir: str, **kwargs) -> None:
     lc_path = path.join(
         silver_dir,
         *config()["data"]["catalogue"]["lc_metadata"]["path"],

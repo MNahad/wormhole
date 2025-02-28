@@ -9,7 +9,7 @@ from .builder.pipe import ETLPipe
 from .stages import lightcurve_stages as stages
 
 
-def process_lightcurves(silver_dir: str, gold_dir: str) -> None:
+def process_lightcurves(silver_dir: str, gold_dir: str, **kwargs) -> None:
     curves_in_dir = path.abspath(
         path.join(silver_dir, *config()["data"]["catalogue"]["lc"]["path"])
     )

@@ -45,4 +45,10 @@ defaults = {
             },
         },
     },
+    "pipelines": {
+        "args": {
+            "debug": False,
+            "tce_ratio": [20_000, 20_000],
+        },
+    },
 }

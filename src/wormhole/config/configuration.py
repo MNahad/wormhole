@@ -18,7 +18,7 @@ def create_config() -> Callable[[], MappingProxyType]:
     return get_config
 
 
-def _load_from_file(file: str = "config.toml") -> dict:
+def _load_from_file(file: str = "wormhole.toml") -> dict:
     if not path.exists(file):
         return dict()
     with open(file, "rb") as f:
