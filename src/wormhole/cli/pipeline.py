@@ -12,7 +12,7 @@ def add_pipeline_parser(subparser: ArgumentParser) -> None:
     me_group = subparser.add_mutually_exclusive_group()
     me_group.add_argument(
         "--only",
-        choices=get_ordered_names(),
+        choices=list(get_ordered_names()),
         metavar="NAME",
         help="only run a single stage by name",
     )

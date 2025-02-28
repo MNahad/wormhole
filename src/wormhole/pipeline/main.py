@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from os import path
-from typing import Callable
+from typing import Callable, Iterator
 
 from wormhole.config import config
 from .bulk_fetch_stsci import fetch_bulk_data
@@ -13,31 +13,23 @@ from .metadataset_pipe import process_metadataset
 from .recache_lightcurves import recache_lightcurve_store
 
 
-def get_ordered_names() -> list[str]:
-    return list(
+def get_ordered_names() -> Iterator[str]:
+    return (
         stage[1].__name__
         for stage in sorted(_get_allowed_stages(), key=lambda x: x[0])
     )
 
 
 def run(name: str) -> None:
+    catalogue_path = config()["data"]["catalogue"]["path"]
     bronze_dir = path.join(
-        *(
-            config()["data"]["catalogue"]["path"]
-            + config()["data"]["catalogue"]["bronze"]["path"]
-        )
+        *(catalogue_path + config()["data"]["catalogue"]["bronze"]["path"])
     )
     silver_dir = path.join(
-        *(
-            config()["data"]["catalogue"]["path"]
-            + config()["data"]["catalogue"]["silver"]["path"]
-        )
+        *(catalogue_path + config()["data"]["catalogue"]["silver"]["path"])
     )
     gold_dir = path.join(
-        *(
-            config()["data"]["catalogue"]["path"]
-            + config()["data"]["catalogue"]["gold"]["path"]
-        )
+        *(catalogue_path + config()["data"]["catalogue"]["gold"]["path"])
     )
     kwargs = {
         "bronze_dir": bronze_dir,
