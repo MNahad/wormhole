@@ -8,7 +8,7 @@ from wormhole.pipeline import get_ordered_names, run
 
 def add_pipeline_parser(subparser: ArgumentParser) -> None:
     subparser.set_defaults(fn=handler)
-    subparser.add_argument("run", help="run a pipeline")
+    subparser.add_argument("run", help="run the pipeline")
     me_group = subparser.add_mutually_exclusive_group()
     me_group.add_argument(
         "--only",
@@ -29,6 +29,10 @@ def handler(args: Namespace) -> None:
         for fn in get_ordered_names():
             print(f"RUNNING {fn} ...")
             run(fn)
-    else:
+        return
+    elif args.only is not None:
         print(f"RUNNING {args.only} ...")
         run(args.only)
+        return
+    else:
+        print("please specify an option (--help/-h for help)")
