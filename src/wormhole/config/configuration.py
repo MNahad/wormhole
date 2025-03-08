@@ -4,13 +4,20 @@
 from os import path
 import tomllib
 from types import MappingProxyType
-from typing import Callable
+from typing import Callable, Optional
 
 from .defaults import defaults
 
 
-def create_config() -> Callable[[], MappingProxyType]:
-    config = _deep_freeze(_use_defaults(_load_from_file(), defaults))
+def create_config(
+    config_path: Optional[str] = None,
+) -> Callable[[], MappingProxyType]:
+    config = _deep_freeze(
+        _use_defaults(
+            _load_from_file(config_path if config_path else "wormhole.toml"),
+            defaults,
+        )
+    )
 
     def get_config() -> MappingProxyType:
         return config
@@ -18,7 +25,7 @@ def create_config() -> Callable[[], MappingProxyType]:
     return get_config
 
 
-def _load_from_file(file: str = "wormhole.toml") -> dict:
+def _load_from_file(file: str) -> dict:
     if not path.exists(file):
         return dict()
     with open(file, "rb") as f:

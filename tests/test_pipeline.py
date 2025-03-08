@@ -8,12 +8,10 @@ from typing import Callable, Iterator, Optional
 import unittest
 
 from wormhole.config import config
-from wormhole.pipeline import (
-    process_metadataset,
-    join_datasets,
-    generate_lightcurve_manifest,
-    process_lightcurves,
-)
+from wormhole.pipeline.generate_dataset import join_datasets
+from wormhole.pipeline.generate_manifest import generate_lightcurve_manifest
+from wormhole.pipeline.lightcurve_pipe import process_lightcurves
+from wormhole.pipeline.metadataset_pipe import process_metadataset
 from . import synth
 
 

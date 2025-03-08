@@ -8,10 +8,10 @@ dynamic = ["version"]
 requires-python = ">=3.12"
 dependencies = [
   "astropy>=7.0.0",
-  "fsspec[http]>=2024.12.0",
-  "jax>=0.4.24",
   "flax>=0.8.0",
   "flaxoil@git+https://github.com/mnahad/flaxoil.git@main",
+  "fsspec[http]>=2024.12.0",
+  "jax>=0.4.24",
   "pyarrow>=18.1.0",
 ]
 authors = [
