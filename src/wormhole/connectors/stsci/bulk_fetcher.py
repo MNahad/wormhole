@@ -10,7 +10,7 @@ from wormhole.common.http import Http
 from wormhole.config import config
 
 
-@dataclass
+@dataclass(frozen=True)
 class ContextManager:
     lc_base_path_pattern: tuple[str, str] = field(
         default=(

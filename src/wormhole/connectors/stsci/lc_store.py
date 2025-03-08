@@ -11,8 +11,10 @@ from jax import Array
 import pyarrow as pa
 
 import wormhole.common.async_wrapper as async_wrapper
-import wormhole.common.fits as fits
+import wormhole.common.defaults as defaults
+import wormhole.common.fits_downloader as fits
 from wormhole.common.fs import make_dir
+import wormhole.common.npz as npz
 import wormhole.common.pa_files as pa_files
 from wormhole.config import config
 
@@ -27,12 +29,7 @@ class LightCurveStore:
     lc_dir: str
     _meta: pa.Table = field(init=False)
     _meta_schema: dict[str, pa.DataType] = field(
-        default_factory=lambda: {
-            "sector": pa.uint8(),
-            "ticid": pa.uint64(),
-            "url": pa.string(),
-            "has_tce": pa.bool_(),
-        },
+        default_factory=lambda: defaults.metadataset_schema(),
         init=False,
     )
     _manifest_path: str = field(
@@ -51,11 +48,7 @@ class LightCurveStore:
         init=False,
     )
     _data_keys: list[str] = field(
-        default_factory=lambda: [
-            "TIME",
-            "PDCSAP_FLUX",
-            "QUALITY",
-        ],
+        default_factory=lambda: defaults.lightcurve_data_keys(),
         init=False,
     )
     _async_batch_size: int = field(
@@ -89,7 +82,7 @@ class LightCurveStore:
         lc_dir: str,
         cache_path: str,
     ) -> None:
-        fits.write(
+        npz.write(
             path.join(
                 lc_dir,
                 cache_path,

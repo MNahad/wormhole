@@ -15,7 +15,7 @@ def create_config(
     config = _deep_freeze(
         _use_defaults(
             _load_from_file(config_path if config_path else "wormhole.toml"),
-            defaults,
+            defaults(),
         )
     )
 

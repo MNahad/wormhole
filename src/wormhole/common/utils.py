@@ -7,11 +7,7 @@ import re
 from typing import Callable, Iterable, Iterator
 
 
-def chain[
-    T,
-    U,
-    V,
-](
+def chain[T, U, V](
     f_initial: Callable[[T], U],
     *f_inters: Callable[[U], U],
     f_final: Callable[[U], V],
@@ -53,10 +49,21 @@ def unique(
         yield element
 
 
-def collect_dict[
-    **P,
-    Q,
-](fn: Callable[P, Iterator[tuple[str, Q]]]) -> Callable[P, dict[str, Q]]:
+def get_vertex_pairs_from_edges(
+    edges: tuple[float, ...],
+) -> tuple[tuple[float, float], ...]:
+    pairs = []
+    for i, edge in enumerate(edges):
+        if i == 0:
+            pairs.append((0.0, edge))
+        else:
+            pairs.append((vertex := pairs[i - 1][-1], vertex + edge))
+    return tuple(pairs)
+
+
+def collect_dict[**P, Q](
+    fn: Callable[P, Iterator[tuple[str, Q]]],
+) -> Callable[P, dict[str, Q]]:
 
     @wraps(fn)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> dict[str, Q]:

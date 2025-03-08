@@ -1,2 +1,2 @@
 [pipelines.args]
-tce_ratio = [1, 1]
+tce_sample_ratio = [1, 1]

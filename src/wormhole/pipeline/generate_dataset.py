@@ -5,6 +5,7 @@ from os import path
 
 import pyarrow as pa
 
+import wormhole.common.defaults as defaults
 from wormhole.common.fs import make_dir
 import wormhole.common.pa_files as pa_files
 from wormhole.config import config
@@ -25,12 +26,7 @@ def join_datasets(silver_dir: str, gold_dir: str, **kwargs) -> None:
             + ("metadataset.csv",)
         )
     )
-    schema = {
-        "sector": pa.uint8(),
-        "ticid": pa.uint64(),
-        "url": pa.string(),
-        "has_tce": pa.bool_(),
-    }
+    schema = defaults.metadataset_schema()
     lc_table = pa_files.read_csv(
         lc_path,
         {k: schema[k] for k in ["sector", "ticid", "url"]},

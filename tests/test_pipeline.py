@@ -98,7 +98,7 @@ class PreprocessingPipelineTestCase(unittest.TestCase):
                 self.assertEqual(hashes[1], hashes[2])
 
     def test_c_generate_manifest(self) -> None:
-        generate_lightcurve_manifest(self.gold_dir, tce_ratio=(1, 1))
+        generate_lightcurve_manifest(self.gold_dir, tce_sample_ratio=(1, 1))
         dir_path = config()["data"]["catalogue"]["lc_manifest"]["path"]
         for hashes in PreprocessingPipelineTestCase._list_hashes_in_dirs(
             path.join(self.baseline_gold_dir, *dir_path),

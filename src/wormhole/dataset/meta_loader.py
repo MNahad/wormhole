@@ -9,6 +9,7 @@ from jax import Array, numpy as jnp, random
 import pyarrow as pa
 from pyarrow import compute as pc
 
+import wormhole.common.defaults as defaults
 import wormhole.common.pa_files as pa_files
 from wormhole.config import config
 
@@ -18,12 +19,7 @@ class MetaDataset:
     dataset_dir: str
     dataset: pa.Table = field(init=False)
     _dataset_schema: dict[str, pa.DataType] = field(
-        default_factory=lambda: {
-            "sector": pa.uint8(),
-            "ticid": pa.uint64(),
-            "url": pa.string(),
-            "has_tce": pa.bool_(),
-        },
+        default_factory=lambda: defaults.metadataset_schema(),
         init=False,
     )
     _cache_path: str = field(
@@ -43,11 +39,10 @@ class MetaDataset:
     _partition_index: pa.Scalar = field(init=False)
     _takeable: Array = field(init=False)
     _key: Array = field(default_factory=lambda: random.key(0), init=False)
-
-    @staticmethod
-    def _choice(key: Array, array: Array, shape: int) -> Array:
-        choice = partial(random.choice, replace=False)
-        return choice(key, array, shape=(shape,))
+    _choice: partial[Array] = field(
+        default_factory=lambda: partial(random.choice, replace=False),
+        init=False,
+    )
 
     def __post_init__(self) -> None:
         self._load()
@@ -77,16 +72,16 @@ class MetaDataset:
             takeable_tce = self._takeable[:partition_index]
             takeable_non_tce = self._takeable[partition_index:]
             self._key, key = random.split(self._key)
-            takeable_tce_indices = MetaDataset._choice(
+            takeable_tce_indices = self._choice(
                 key,
                 takeable_tce.nonzero()[0],
-                shape=k[0],
+                shape=(k[0],),
             )
             takeable_non_tce_indices = (
-                MetaDataset._choice(
+                self._choice(
                     key,
                     takeable_non_tce.nonzero()[0],
-                    shape=k[1],
+                    shape=(k[1],),
                 )
                 + partition_index
             )
