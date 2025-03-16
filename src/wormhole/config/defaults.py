@@ -53,4 +53,12 @@ def defaults() -> dict:
                 "tce_sample_ratio": [20_000, 20_000],
             },
         },
+        "training": {
+            "splits": {
+                "train": 0.5,
+                "test": 0.3,
+                "eval": 0.2,
+            },
+            "batch_size": 100,
+        },
     }

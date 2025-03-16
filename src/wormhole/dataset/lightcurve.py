@@ -25,11 +25,13 @@ class Data:
     time: Array = field(init=False)
     pdcsap_flux: Array = field(init=False)
     quality: Array = field(init=False)
+    sequence_length: Array = field(init=False)
 
     def __post_init__(self, data: npz.Npz) -> None:
         self.time = data["TIME"]
         self.pdcsap_flux = data["PDCSAP_FLUX"]
         self.quality = data["QUALITY"]
+        self.sequence_length = jnp.argmin(self.time)
 
 
 class Label(Enum):
@@ -38,14 +40,21 @@ class Label(Enum):
 
 
 @dataclass(frozen=True)
+class Meta:
+    sector: str
+    ticid: str
+
+
+@dataclass(frozen=True)
 class LightCurve:
     data: Data
     label: Label
+    meta: Meta
 
 
 class _LightCurveDataSource:
     lc_dir: str
-    shard: tuple[int, int]
+    _slice: tuple[int, int]
     _active_manifest: pa.Table
     _lc_path: str = path.join(*config()["data"]["catalogue"]["lc"]["path"])
 
@@ -57,7 +66,7 @@ class _LightCurveDataSource:
     ) -> None:
         self.lc_dir = lc_dir
         manifest_size = manifest.num_rows
-        self.shard = (
+        self._slice = (
             (
                 offset := math.ceil(manifest_size * shard[0]),
                 math.ceil(manifest_size * shard[1]) - offset,
@@ -65,7 +74,7 @@ class _LightCurveDataSource:
             if shard
             else (0, manifest_size)
         )
-        self._active_manifest = manifest.slice(*self.shard)
+        self._active_manifest = manifest.slice(*self._slice)
 
     def __len__(self) -> int:
         return self._active_manifest.num_rows
@@ -87,6 +96,7 @@ class _LightCurveDataSource:
                 )
             ),
             label,
+            Meta(sector, ticid),
         )
 
 
@@ -131,7 +141,8 @@ class _LightCurveDataSourceFactory:
 class LightCurveLoader:
     manifest_dir: str
     lc_dir: str
-    shards: tuple[tuple[float, float], ...]
+    _shards: tuple[tuple[float, float], ...]
+    _batch_size: int
     _factory: _LightCurveDataSourceFactory
     _data_sources: tuple[grain.RandomAccessDataSource, ...]
     _data_loaders: tuple[grain.DataLoader, ...]
@@ -141,20 +152,22 @@ class LightCurveLoader:
         manifest_dir: str,
         lc_dir: str,
         split_ratio: Optional[tuple[float, ...]] = None,
+        batch_size: Optional[int] = None,
     ) -> None:
         self.manifest_dir = manifest_dir
         self.lc_dir = lc_dir
-        self.shards = (
+        self._shards = (
             get_vertex_pairs_from_edges(split_ratio)
             if split_ratio
             else ((0.0, 1.0),)
         )
+        self._batch_size = batch_size if batch_size else 0
         self._factory = _LightCurveDataSourceFactory(
             self.manifest_dir,
             self.lc_dir,
         )
         self._data_sources = tuple(
-            self._factory.new(shard) for shard in self.shards
+            self._factory.new(shard) for shard in self._shards
         )
         self._data_loaders = tuple(
             grain.DataLoader(
@@ -165,6 +178,11 @@ class LightCurveLoader:
                     shuffle=True,
                     num_epochs=1,
                     seed=0,
+                ),
+                operations=(
+                    (grain.Batch(batch_size=self._batch_size),)
+                    if self._batch_size > 0
+                    else ()
                 ),
             )
             for data_source in self._data_sources

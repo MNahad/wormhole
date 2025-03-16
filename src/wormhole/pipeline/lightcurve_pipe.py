@@ -27,10 +27,12 @@ def _run_pipe(read_dir: str, write_dir: str) -> None:
     pipe = ETLPipe(
         stages.extract,
         (
+            stages.equalise_size,
             stages.filter_low_q,
             stages.standardise_t,
             stages.standardise_flux,
             stages.filter_nan,
+            stages.use_delta_t,
         ),
         stages.load,
         read_dir,

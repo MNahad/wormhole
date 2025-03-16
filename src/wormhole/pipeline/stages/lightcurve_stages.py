@@ -27,10 +27,24 @@ def load(lcs: Pipe, file: str, sink: str) -> None:
 
 @iterate
 @jit
+def equalise_size(lc: LC) -> LC:
+    seq_len = len(lc["TIME"])
+    for key in defaults.lightcurve_data_keys():
+        lc[key] = jnp.pad(
+            lc[key],
+            (0, _get_array_size() - seq_len),
+            mode="constant",
+            constant_values=(_get_array_fill_value(key),),
+        )
+    return lc
+
+
+@iterate
+@jit
 def filter_low_q(lc: LC) -> LC:
     quality = lc["QUALITY"]
     low_mask = _generate_low_q_mask()
-    i_bad = _jnp_nonzero(quality & low_mask)[0].at[: len(quality)].get()
+    i_bad = _jnp_nonzero(quality & low_mask)[0]
     lc["PDCSAP_FLUX"] = lc["PDCSAP_FLUX"].at[i_bad].set(jnp.nan)
     return lc
 
@@ -56,19 +70,20 @@ def standardise_flux(lc: LC) -> LC:
 @jit
 def filter_nan(lc: LC) -> LC:
     pdcsap_flux = lc["PDCSAP_FLUX"]
-    i_not_nan = (
-        _jnp_nonzero(~jnp.isnan(pdcsap_flux))[0].at[: len(pdcsap_flux)].get()
-    )
-    for arr in defaults.lightcurve_data_keys():
-        lc[arr] = lc[arr].at[i_not_nan].get()
+    i_not_nan = _jnp_nonzero(~jnp.isnan(pdcsap_flux))[0]
+    for key in defaults.lightcurve_data_keys():
+        lc[key] = lc[key].at[i_not_nan].get()
     return lc
 
 
-_jnp_nonzero = partial(
-    jit(jnp.nonzero, static_argnames="size"),
-    size=100_000,
-    fill_value=-1,
-)
+@iterate
+@jit
+def use_delta_t(lc: LC) -> LC:
+    t = lc["TIME"]
+    dt = t - jnp.roll(t, 1)
+    dt = dt.at[0].set(0)
+    lc["TIME"] = dt
+    return lc
 
 
 @jit
@@ -78,3 +93,26 @@ def _generate_low_q_mask() -> int:
     for b in low_q_flags:
         mask += 1 << (b - 1)
     return mask
+
+
+def _get_array_size() -> int:
+    return 32_768
+
+
+def _get_array_fill_value(key: str) -> float:
+    match key:
+        case "TIME":
+            return jnp.nan
+        case "PDCSAP_FLUX":
+            return jnp.nan
+        case "QUALITY":
+            return 0
+        case _:
+            return -1
+
+
+_jnp_nonzero = partial(
+    jit(jnp.nonzero, static_argnames=("size",)),
+    size=_get_array_size(),
+    fill_value=_get_array_size(),
+)
