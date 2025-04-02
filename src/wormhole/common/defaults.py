@@ -15,3 +15,7 @@ def metadataset_schema() -> dict[str, pa.DataType]:
 
 def lightcurve_data_keys() -> list[str]:
     return ["TIME", "PDCSAP_FLUX", "QUALITY"]
+
+
+def lightcurve_array_size() -> int:
+    return 32_768

@@ -60,5 +60,6 @@ def defaults() -> dict:
                 "eval": 0.2,
             },
             "batch_size": 100,
+            "num_epochs": 1,
         },
     }

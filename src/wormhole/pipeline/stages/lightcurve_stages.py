@@ -32,7 +32,7 @@ def equalise_size(lc: LC) -> LC:
     for key in defaults.lightcurve_data_keys():
         lc[key] = jnp.pad(
             lc[key],
-            (0, _get_array_size() - seq_len),
+            (0, defaults.lightcurve_array_size() - seq_len),
             mode="constant",
             constant_values=(_get_array_fill_value(key),),
         )
@@ -52,7 +52,7 @@ def filter_low_q(lc: LC) -> LC:
 @iterate
 @jit
 def standardise_t(lc: LC) -> LC:
-    lc["TIME"] = lc["TIME"] - lc["TIME"][0]
+    lc["TIME"] = (lc["TIME"] - lc["TIME"][0]) * 1_440
     return lc
 
 
@@ -81,7 +81,7 @@ def filter_nan(lc: LC) -> LC:
 def use_delta_t(lc: LC) -> LC:
     t = lc["TIME"]
     dt = t - jnp.roll(t, 1)
-    dt = dt.at[0].set(0)
+    dt = dt.at[0].set(1e-6)
     lc["TIME"] = dt
     return lc
 
@@ -93,10 +93,6 @@ def _generate_low_q_mask() -> int:
     for b in low_q_flags:
         mask += 1 << (b - 1)
     return mask
-
-
-def _get_array_size() -> int:
-    return 32_768
 
 
 def _get_array_fill_value(key: str) -> float:
@@ -113,6 +109,6 @@ def _get_array_fill_value(key: str) -> float:
 
 _jnp_nonzero = partial(
     jit(jnp.nonzero, static_argnames=("size",)),
-    size=_get_array_size(),
-    fill_value=_get_array_size(),
+    size=defaults.lightcurve_array_size(),
+    fill_value=defaults.lightcurve_array_size(),
 )
