@@ -1,0 +1,4 @@
+#!/bin/sh
+# SYNTHETIC DATA
+curl -C - -L -o tess0000000000001-s0001-0000000000000001-0001-s_lc.fits https://example.com/tess0000000000001-s0001-0000000000000001-0001-s_lc.fits
+curl -C - -L -o tess0000000000001-s0001-0000000000000002-0001-s_lc.fits https://example.com/tess0000000000001-s0001-0000000000000002-0001-s_lc.fits
