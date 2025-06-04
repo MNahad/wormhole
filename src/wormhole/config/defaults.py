@@ -59,6 +59,11 @@ def defaults() -> dict:
                 "test": 0.3,
                 "eval": 0.2,
             },
+            "allowed_labels_by_split": {
+                "train": [True, False],
+                "test": [True, False],
+                "eval": [True, False],
+            },
             "batch_size": 100,
             "num_epochs": 1,
         },
