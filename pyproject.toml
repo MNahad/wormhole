@@ -1,19 +1,21 @@
 [build-system]
-requires = ["setuptools>=75.6.0", "setuptools_scm>=8.1.0"]
+requires = ["setuptools ~= 80.9.0", "setuptools_scm ~= 8.3.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "wormhole"
 dynamic = ["version"]
-requires-python = ">=3.12"
+requires-python = ">= 3.13"
 dependencies = [
-  "astropy>=7.0.0",
-  "flax>=0.8.0",
-  "flaxoil@git+https://github.com/mnahad/flaxoil.git@main",
-  "fsspec[http]>=2024.12.0",
-  "grain>=0.2.3",
-  "jax>=0.4.24",
-  "pyarrow>=18.1.0",
+  "astropy >= 7.1.0",
+  "flax >= 0.10.6",
+  "flaxoil @ git+https://github.com/mnahad/flaxoil.git@v0.8.0",
+  "fsspec[http] >= 2025.5.1",
+  "grain >= 0.2.9",
+  "jax >= 0.6.1",
+  "optax >= 0.2.5",
+  "orbax-checkpoint >= 0.11.15",
+  "pyarrow >= 20.0.0",
 ]
 authors = [
   { name="Mohammed Nawabuddin", email="MNahad@users.noreply.github.com" },
