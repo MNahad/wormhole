@@ -52,15 +52,15 @@ def enable_checkpointing[**P](
                 kwargs["dataset"] = dataset
                 kwargs["state"] = state
                 kwargs["wirings_constants"] = wirings_constants
-            for next_iter in fn(*args, **kwargs):
-                _save(
-                    mngr,
-                    next_iter[0],
-                    next_iter[2],
-                    next_iter[3],
-                    next_iter[4],
-                )
-                yield next_iter
+                for next_iter in fn(*args, **kwargs):
+                    _save(
+                        mngr,
+                        next_iter[0],
+                        next_iter[2],
+                        next_iter[3],
+                        next_iter[4],
+                    )
+                    yield next_iter
 
         return wrapper
 
@@ -74,15 +74,15 @@ def _save(
     loader_iter: grain.PyGrainDatasetIterator,
     wirings_constants: flax.core.FrozenDict,
 ) -> None:
+    mngr.wait_until_finished()
     mngr.save(
         step,
         args=ocp.args.Composite(
-            state=ocp.args.PyTreeSave(state),
+            state=ocp.args.StandardSave(state),
             loader=grain.PyGrainCheckpointSave(loader_iter),
-            wirings_constants=ocp.args.PyTreeSave(wirings_constants),
+            wirings_constants=ocp.args.StandardSave(wirings_constants),
         ),
     )
-    mngr.wait_until_finished()
 
 
 def _restore(
@@ -96,9 +96,9 @@ def _restore(
             mngr.restore(
                 latest_step,
                 args=ocp.args.Composite(
-                    state=ocp.args.PyTreeRestore(),
+                    state=ocp.args.StandardRestore(),
                     loader=grain.PyGrainCheckpointRestore(loader_iter),
-                    wirings_constants=ocp.args.PyTreeRestore(),
+                    wirings_constants=ocp.args.StandardRestore(),
                 ),
             ),
         )

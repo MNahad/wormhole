@@ -1,8 +1,7 @@
 # Copyright 2024-2025 Mohammed Nawabuddin
 # SPDX-License-Identifier: Apache-2.0
 
-from os import path
-from typing import Iterator, Optional
+from typing import Callable, Iterator
 
 import flax.core
 from flax.training import train_state
@@ -11,20 +10,16 @@ import jax
 from jax import Array
 import optax
 
-from wormhole.config import config
 from wormhole.dataset import LightCurve
-from .checkpointer import enable_checkpointing
 
 
-@enable_checkpointing(path.join(*(config()["checkpoints"]["path"] + ("tmp",))))
 def train(
     *,
-    model: nn.Module,
-    tx: optax.GradientTransformation,
     dataset: Iterator[LightCurve],
+    rngs: dict[str, Array],
+    state: train_state.TrainState,
+    wirings_constants: flax.core.FrozenDict,
     step: int = 0,
-    state: Optional[train_state.TrainState] = None,
-    wirings_constants: Optional[flax.core.FrozenDict] = None,
 ) -> Iterator[
     tuple[
         int,
@@ -34,26 +29,19 @@ def train(
         flax.core.FrozenDict,
     ]
 ]:
-    rngs = {"params": jax.random.key(0)}
     for lcs in dataset:
-        if step == 0:
-            state, wirings_constants = _create_train_state_and_variables(
-                model,
-                lcs,
-                rngs,
-                tx,
-            )
         state, loss = _train(state, lcs, wirings_constants, rngs)
         step += 1
         yield step, loss, state, dataset, wirings_constants
 
 
-def _create_train_state_and_variables(
+def create_train_state_and_constants(
     model: nn.Module,
-    lcs: LightCurve,
     rngs: dict[str, Array],
     tx: optax.GradientTransformation,
+    get_sample_lcs: Callable[[], LightCurve],
 ) -> tuple[train_state.TrainState, flax.core.FrozenDict]:
+    lcs = get_sample_lcs()
     variables = model.init(rngs, lcs[0], seq_lengths=lcs[2])
     params = variables["params"]
     wirings_constants = variables["wirings_constants"]
