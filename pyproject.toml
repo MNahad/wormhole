@@ -11,10 +11,10 @@ dependencies = [
   "flax >= 0.10.6",
   "flaxoil @ git+https://github.com/mnahad/flaxoil.git@v0.8.0",
   "fsspec[http] >= 2025.5.1",
-  "grain >= 0.2.9",
-  "jax >= 0.6.1",
+  "grain >= 0.2.10",
+  "jax >= 0.6.2",
   "optax >= 0.2.5",
-  "orbax-checkpoint >= 0.11.15",
+  "orbax-checkpoint >= 0.11.16",
   "pyarrow >= 20.0.0",
 ]
 authors = [
