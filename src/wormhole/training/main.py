@@ -2,59 +2,67 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from os import path
-from typing import Iterator
 
 import optax
 
 from wormhole.config import config
-from wormhole.dataset import LightCurveDataLoader, LightCurve
-from wormhole.training.model_gen import BasicRNNClassifier
-from wormhole.training.trainer import train
+from wormhole.dataset import LightCurveDataLoader
+from .model_gen import BasicRNNClassifier
+from .trainer import train
 
 
-def get_dataset(
-    gold_dir: str,
+def get_config() -> dict:
+    conf = config()
+    return {**conf["training"]}
+
+
+def get_dataloader(
+    manifest_dir: str,
+    lc_dir: str,
     split_keys: tuple[str, ...],
     *,
     splits: dict,
     batch_size: int,
     num_epochs: int,
     allowed_labels_by_split: dict[str, tuple[bool, ...]],
-) -> tuple[Iterator[LightCurve], ...]:
+) -> LightCurveDataLoader:
     allowed_label_split_indices = {
         i: allowed_labels_by_split[k]
         for i, k in enumerate(split_keys)
         if k in allowed_labels_by_split
     }
-    sets = LightCurveDataLoader(
-        gold_dir,
-        gold_dir,
+    loader = LightCurveDataLoader(
+        manifest_dir,
+        lc_dir,
         split_ratio=(splits[k] for k in split_keys),
         batch_size=batch_size,
         num_epochs=num_epochs,
         allowed_labels_split_indices=allowed_label_split_indices,
-    ).get()
-    return sets
+    )
+    return loader
 
 
 def main() -> None:
-    conf = config()
-    catalogue_path = conf["data"]["catalogue"]["path"]
+    conf = get_config()
     gold_dir = path.join(
-        *(catalogue_path + conf["data"]["catalogue"]["gold"]["path"])
+        *(
+            config()["data"]["catalogue"]["path"]
+            + config()["data"]["catalogue"]["gold"]["path"]
+        )
     )
-    splits = conf["training"]["splits"]
-    batch_size = conf["training"]["batch_size"]
-    num_epochs = conf["training"]["num_epochs"]
-    allowed_labels_by_split = conf["training"]["allowed_labels_by_split"]
-    train_set, test_set, eval_set = get_dataset(
+    train_set, test_set, eval_set = get_dataloader(
+        gold_dir,
         gold_dir,
         ("train", "test", "eval"),
-        splits=splits,
-        batch_size=batch_size,
-        num_epochs=num_epochs,
-        allowed_labels_by_split=allowed_labels_by_split,
-    )
+        splits=conf["splits"],
+        batch_size=conf["batch_size"],
+        num_epochs=conf["num_epochs"],
+        allowed_labels_by_split=conf["allowed_labels_by_split"],
+    ).get()
     model = BasicRNNClassifier()
-    for loss in train(model, train_set, optax.adam(0.01)):
-        print(f"loss: {loss}")
+    for step, loss, _, _, _ in train(
+        model=model,
+        dataset=iter(train_set),
+        tx=optax.adam(0.01),
+    ):
+        print(f"step: {step} loss: {loss}")

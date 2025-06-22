@@ -42,6 +42,9 @@ class _DataSource:
         )
         self._active_manifest = manifest.slice(*self._slice)
 
+    def __repr__(self) -> str:
+        return f"_DataSource(_slice={self._slice})"
+
     def __len__(self) -> int:
         return self._active_manifest.num_rows
 
@@ -107,6 +110,7 @@ class DataLoader:
     lc_dir: str
     _shards: tuple[tuple[float, float], ...]
     _batch_size: int
+    _num_epochs: int
     _factory: _DataSourceFactory
     _data_sources: tuple[grain.RandomAccessDataSource, ...]
     _data_loaders: tuple[grain.DataLoader, ...]

@@ -67,4 +67,7 @@ def defaults() -> dict:
             "batch_size": 100,
             "num_epochs": 1,
         },
+        "checkpoints": {
+            "path": ["checkpoints"],
+        },
     }

@@ -1,26 +1,42 @@
 # Copyright 2024-2025 Mohammed Nawabuddin
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Iterator
+from os import path
+from typing import Iterator, Optional
 
+import flax.core
+from flax.training import train_state
+from flax import linen as nn
 import jax
 from jax import Array
-from flax import linen as nn
-from flax.training import train_state
-import flax.core
 import optax
 
+from wormhole.config import config
 from wormhole.dataset import LightCurve
+from .checkpointer import enable_checkpointing
 
 
+@enable_checkpointing(path.join(*(config()["checkpoints"]["path"] + ("tmp",))))
 def train(
+    *,
     model: nn.Module,
-    train_set: Iterator[LightCurve],
-    tx=optax.GradientTransformation,
-) -> Iterator[Array]:
+    tx: optax.GradientTransformation,
+    dataset: Iterator[LightCurve],
+    step: int = 0,
+    state: Optional[train_state.TrainState] = None,
+    wirings_constants: Optional[flax.core.FrozenDict] = None,
+) -> Iterator[
+    tuple[
+        int,
+        Array,
+        train_state.TrainState,
+        Iterator[LightCurve],
+        flax.core.FrozenDict,
+    ]
+]:
     rngs = {"params": jax.random.key(0)}
-    for i, lcs in enumerate(train_set):
-        if i == 0:
+    for lcs in dataset:
+        if step == 0:
             state, wirings_constants = _create_train_state_and_variables(
                 model,
                 lcs,
@@ -28,7 +44,8 @@ def train(
                 tx,
             )
         state, loss = _train(state, lcs, wirings_constants, rngs)
-        yield loss
+        step += 1
+        yield step, loss, state, dataset, wirings_constants
 
 
 def _create_train_state_and_variables(
