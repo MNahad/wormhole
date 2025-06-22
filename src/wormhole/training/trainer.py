@@ -1,7 +1,8 @@
 # Copyright 2024-2025 Mohammed Nawabuddin
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Callable, Iterator
+from os import path
+from typing import Iterator
 
 import flax.core
 from flax.training import train_state
@@ -10,9 +11,12 @@ import jax
 from jax import Array
 import optax
 
+from wormhole.config import config
 from wormhole.dataset import LightCurve
+from .checkpointer import enable_checkpointing
 
 
+@enable_checkpointing(path.join(*config()["checkpoints"]["path"]))
 def train(
     *,
     dataset: Iterator[LightCurve],
@@ -39,10 +43,9 @@ def create_train_state_and_constants(
     model: nn.Module,
     rngs: dict[str, Array],
     tx: optax.GradientTransformation,
-    get_sample_lcs: Callable[[], LightCurve],
+    initial_lcs: LightCurve,
 ) -> tuple[train_state.TrainState, flax.core.FrozenDict]:
-    lcs = get_sample_lcs()
-    variables = model.init(rngs, lcs[0], seq_lengths=lcs[2])
+    variables = model.init(rngs, initial_lcs[0], seq_lengths=initial_lcs[2])
     params = variables["params"]
     wirings_constants = variables["wirings_constants"]
     return (

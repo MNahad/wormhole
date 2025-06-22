@@ -8,6 +8,7 @@ from typing import Callable, Iterator, Mapping, Optional
 import flax.core
 from flax.training import train_state
 import grain.python as grain
+import jax
 from jax import Array
 import orbax.checkpoint as ocp
 
@@ -38,10 +39,15 @@ def enable_checkpointing[**P](
                 options=options if options else ocp.CheckpointManagerOptions(),
             ) as mngr:
                 step = 0
-                state = None
-                wirings_constants = None
                 dataset = kwargs["dataset"]
-                restored = _restore(mngr, dataset)
+                state = kwargs["state"]
+                wirings_constants = kwargs["wirings_constants"]
+                restored = _restore(
+                    mngr,
+                    _pytree_to_abstract(state),
+                    dataset,
+                    _pytree_to_abstract(wirings_constants),
+                )
                 if restored is not None:
                     step = restored[0]
                     restored_composite = restored[1]
@@ -53,6 +59,7 @@ def enable_checkpointing[**P](
                 kwargs["state"] = state
                 kwargs["wirings_constants"] = wirings_constants
                 for next_iter in fn(*args, **kwargs):
+                    mngr.wait_until_finished()
                     _save(
                         mngr,
                         next_iter[0],
@@ -74,7 +81,6 @@ def _save(
     loader_iter: grain.PyGrainDatasetIterator,
     wirings_constants: flax.core.FrozenDict,
 ) -> None:
-    mngr.wait_until_finished()
     mngr.save(
         step,
         args=ocp.args.Composite(
@@ -87,7 +93,9 @@ def _save(
 
 def _restore(
     mngr: ocp.CheckpointManager,
+    abstract_state: jax.ShapeDtypeStruct,
     loader_iter: grain.PyGrainDatasetIterator,
+    abstract_wirings_constants: jax.ShapeDtypeStruct,
 ) -> Optional[tuple[int, Mapping]]:
     latest_step = mngr.latest_step()
     return (
@@ -96,12 +104,18 @@ def _restore(
             mngr.restore(
                 latest_step,
                 args=ocp.args.Composite(
-                    state=ocp.args.StandardRestore(),
+                    state=ocp.args.StandardRestore(abstract_state),
                     loader=grain.PyGrainCheckpointRestore(loader_iter),
-                    wirings_constants=ocp.args.StandardRestore(),
+                    wirings_constants=ocp.args.StandardRestore(
+                        abstract_wirings_constants
+                    ),
                 ),
             ),
         )
         if latest_step is not None
         else None
     )
+
+
+def _pytree_to_abstract(tree: Array | object) -> jax.ShapeDtypeStruct:
+    return jax.tree.map(ocp.tree.to_shape_dtype_struct, tree)
