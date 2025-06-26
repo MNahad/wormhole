@@ -5,13 +5,22 @@ from flax import linen as nn
 from flaxoil import ltc
 from jax import Array, numpy as jnp
 
+from wormhole.config import config
+
 
 class BasicRNNClassifier(nn.Module):
     @nn.compact
     def __call__(self, inputs: Array, *, seq_lengths: Array) -> Array:
         x = nn.RNN(
             ltc.LTCCell(
-                {"ncp": {"units": 11, "output_size": 1}},
+                {
+                    "ncp": {
+                        "units": config()["training"]["hyperparameters"][
+                            "models"
+                        ]["basic"]["units"],
+                        "output_size": 1,
+                    }
+                },
                 irregular_time_mode=True,
             ),
             variable_broadcast=["params", "wirings_constants"],

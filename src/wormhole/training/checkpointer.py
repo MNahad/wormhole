@@ -1,6 +1,7 @@
 # Copyright 2024-2025 Mohammed Nawabuddin
 # SPDX-License-Identifier: Apache-2.0
 
+from datetime import datetime, timezone
 from functools import wraps
 from os import path
 from typing import Callable, Iterator, Mapping, Optional
@@ -16,56 +17,95 @@ from wormhole.dataset import LightCurve
 
 type _ReturnType = Iterator[
     tuple[
-        int,
-        Array,
-        train_state.TrainState,
-        Iterator[LightCurve],
-        flax.core.FrozenDict,
+        tuple[int, Array],
+        tuple[Iterator[LightCurve], train_state.TrainState],
     ]
 ]
 
+type _OuterFn = Callable[
+    [
+        Iterator[LightCurve],
+        dict[str, Array],
+        train_state.TrainState,
+        flax.core.FrozenDict,
+        Optional[str],
+    ],
+    _ReturnType,
+]
 
-def enable_checkpointing[**P](
+type _InnerFn = Callable[
+    [
+        Iterator[LightCurve],
+        dict[str, Array],
+        train_state.TrainState,
+        flax.core.FrozenDict,
+        int,
+    ],
+    _ReturnType,
+]
+
+
+def enable_checkpointing(
     dir: str,
     options: Optional[ocp.CheckpointManagerOptions] = None,
-) -> Callable[[Callable[P, _ReturnType]], Callable[P, _ReturnType]]:
+    default_run_id: str = datetime.now(timezone.utc).isoformat(
+        timespec="seconds"
+    ),
+) -> Callable[[_InnerFn], _OuterFn]:
 
-    def checkpointer(fn: Callable[P, _ReturnType]) -> Callable[P, _ReturnType]:
+    def checkpointer(fn: _InnerFn) -> _OuterFn:
 
         @wraps(fn)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> _ReturnType:
+        def wrapper(dataset, rngs, state, constants, run_id):
+            ckpt_path = path.abspath(
+                path.join(dir, run_id if run_id else default_run_id)
+            )
             with ocp.CheckpointManager(
-                path.abspath(dir),
+                path.join(ckpt_path, "constants"),
+                options=options if options else ocp.CheckpointManagerOptions(),
+            ) as constants_mngr:
+                restored_constants = _restore(
+                    constants_mngr,
+                    ocp.args.StandardRestore(_pytree_to_abstract(constants)),
+                )
+                if restored_constants is None:
+                    _save(
+                        constants_mngr,
+                        0,
+                        ocp.args.StandardSave(constants),
+                    )
+                else:
+                    constants = restored_constants[1]
+            with ocp.CheckpointManager(
+                path.join(ckpt_path, "checkpoint"),
                 options=options if options else ocp.CheckpointManagerOptions(),
             ) as mngr:
                 step = 0
-                dataset = kwargs["dataset"]
-                state = kwargs["state"]
-                wirings_constants = kwargs["wirings_constants"]
                 restored = _restore(
                     mngr,
-                    _pytree_to_abstract(state),
-                    dataset,
-                    _pytree_to_abstract(wirings_constants),
+                    ocp.args.Composite(
+                        state=ocp.args.StandardRestore(
+                            _pytree_to_abstract(state)
+                        ),
+                        loader=grain.PyGrainCheckpointRestore(dataset),
+                    ),
                 )
                 if restored is not None:
                     step = restored[0]
                     restored_composite = restored[1]
                     dataset = restored_composite["loader"]
                     state = restored_composite["state"]
-                    wirings_constants = restored_composite["wirings_constants"]
-                kwargs["step"] = step
-                kwargs["dataset"] = dataset
-                kwargs["state"] = state
-                kwargs["wirings_constants"] = wirings_constants
-                for next_iter in fn(*args, **kwargs):
+                for next_iter in fn(dataset, rngs, state, constants, step):
                     mngr.wait_until_finished()
                     _save(
                         mngr,
-                        next_iter[0],
-                        next_iter[2],
-                        next_iter[3],
-                        next_iter[4],
+                        next_iter[0][0],
+                        ocp.args.Composite(
+                            state=ocp.args.StandardSave(next_iter[1][1]),
+                            loader=grain.PyGrainCheckpointSave(
+                                next_iter[1][0]
+                            ),
+                        ),
                     )
                     yield next_iter
 
@@ -77,45 +117,25 @@ def enable_checkpointing[**P](
 def _save(
     mngr: ocp.CheckpointManager,
     step: int,
-    state: train_state.TrainState,
-    loader_iter: grain.PyGrainDatasetIterator,
-    wirings_constants: flax.core.FrozenDict,
+    save_args: ocp.args.CheckpointArgs,
 ) -> None:
-    mngr.save(
-        step,
-        args=ocp.args.Composite(
-            state=ocp.args.StandardSave(state),
-            loader=grain.PyGrainCheckpointSave(loader_iter),
-            wirings_constants=ocp.args.StandardSave(wirings_constants),
-        ),
-    )
+    mngr.save(step, args=save_args)
 
 
 def _restore(
     mngr: ocp.CheckpointManager,
-    abstract_state: jax.ShapeDtypeStruct,
-    loader_iter: grain.PyGrainDatasetIterator,
-    abstract_wirings_constants: jax.ShapeDtypeStruct,
+    restore_args=ocp.args.CheckpointArgs,
 ) -> Optional[tuple[int, Mapping]]:
     latest_step = mngr.latest_step()
     return (
         (
             latest_step,
-            mngr.restore(
-                latest_step,
-                args=ocp.args.Composite(
-                    state=ocp.args.StandardRestore(abstract_state),
-                    loader=grain.PyGrainCheckpointRestore(loader_iter),
-                    wirings_constants=ocp.args.StandardRestore(
-                        abstract_wirings_constants
-                    ),
-                ),
-            ),
+            mngr.restore(latest_step, args=restore_args),
         )
         if latest_step is not None
         else None
     )
 
 
-def _pytree_to_abstract(tree: Array | object) -> jax.ShapeDtypeStruct:
+def _pytree_to_abstract(tree: Array) -> jax.ShapeDtypeStruct:
     return jax.tree.map(ocp.tree.to_shape_dtype_struct, tree)

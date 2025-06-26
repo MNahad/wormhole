@@ -10,33 +10,35 @@ from flax import linen as nn
 import jax
 from jax import Array
 import optax
+import orbax.checkpoint as ocp
 
 from wormhole.config import config
 from wormhole.dataset import LightCurve
 from .checkpointer import enable_checkpointing
 
 
-@enable_checkpointing(path.join(*config()["checkpoints"]["path"]))
+@enable_checkpointing(
+    path.join(*config()["checkpoints"]["path"]),
+    ocp.CheckpointManagerOptions(
+        save_interval_steps=config()["checkpoints"]["save_interval_steps"]
+    ),
+)
 def train(
-    *,
     dataset: Iterator[LightCurve],
     rngs: dict[str, Array],
     state: train_state.TrainState,
     wirings_constants: flax.core.FrozenDict,
-    step: int = 0,
+    step: int,
 ) -> Iterator[
     tuple[
-        int,
-        Array,
-        train_state.TrainState,
-        Iterator[LightCurve],
-        flax.core.FrozenDict,
+        tuple[int, Array],
+        tuple[Iterator[LightCurve], train_state.TrainState],
     ]
 ]:
     for lcs in dataset:
         state, loss = _train(state, lcs, wirings_constants, rngs)
         step += 1
-        yield step, loss, state, dataset, wirings_constants
+        yield (step, loss), (dataset, state)
 
 
 def create_train_state_and_constants(

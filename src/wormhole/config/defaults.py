@@ -64,10 +64,19 @@ def defaults() -> dict:
                 "test": [True, False],
                 "eval": [True, False],
             },
-            "batch_size": 100,
-            "num_epochs": 1,
+            "batch_size": 10,
+            "num_epochs": 10,
+            "hyperparameters": {
+                "adam": 0.01,
+                "models": {
+                    "basic": {
+                        "units": 11,
+                    }
+                },
+            },
         },
         "checkpoints": {
             "path": ["checkpoints"],
+            "save_interval_steps": 100,
         },
     }
