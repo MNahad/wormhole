@@ -8,6 +8,10 @@ from jax import Array, numpy as jnp
 from wormhole.config import config
 
 
+def get_models() -> dict[str, type[nn.Module]]:
+    return {"basic": BasicRNNClassifier}
+
+
 class BasicRNNClassifier(nn.Module):
     @nn.compact
     def __call__(self, inputs: Array, *, seq_lengths: Array) -> Array:

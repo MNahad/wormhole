@@ -74,6 +74,7 @@ def defaults() -> dict:
                     }
                 },
             },
+            "active_model": "basic",
         },
         "checkpoints": {
             "path": ["checkpoints"],

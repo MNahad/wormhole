@@ -4,6 +4,7 @@
 import argparse
 
 from .pipeline import add_pipeline_parser
+from .training import add_training_parser
 
 
 def entrypoint():
@@ -14,6 +15,8 @@ def entrypoint():
     subparsers = parser.add_subparsers()
     pipeline_parser = subparsers.add_parser(name="pipeline")
     add_pipeline_parser(pipeline_parser)
+    training_parser = subparsers.add_parser(name="training")
+    add_training_parser(training_parser)
     args = parser.parse_args()
     if "fn" not in args:
         print(parser.format_help())

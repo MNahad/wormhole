@@ -9,24 +9,19 @@ import optax
 
 from wormhole.config import config
 from .loader import get_dataloader, get_sample_dataloader
-from .model_gen import BasicRNNClassifier
+from .model_gen import get_models
 from .trainer import create_train_state_and_constants, train
 
 
-def get_training_config() -> dict:
-    conf = config()
-    return {**conf["training"]}
-
-
-def main(run_id: Optional[str] = None) -> None:
-    training_conf = get_training_config()
+def run(job_id: Optional[str] = None) -> None:
+    training_conf = config()["training"]
     gold_dir = path.join(
         *(
             config()["data"]["catalogue"]["path"]
             + config()["data"]["catalogue"]["gold"]["path"]
         )
     )
-    train_dataset, test_dataset, eval_dataset = get_dataloader(
+    train_dataset, test_dataset, _ = get_dataloader(
         gold_dir,
         gold_dir,
         ("train", "test", "eval"),
@@ -41,7 +36,7 @@ def main(run_id: Optional[str] = None) -> None:
         batch_size=training_conf["batch_size"],
         allowed_labels_by_split=training_conf["allowed_labels_by_split"],
     ).get()[0]
-    model = BasicRNNClassifier()
+    model = get_models()[training_conf["active_model"]]()
     rngs = {"params": jax.random.key(0)}
     train_state, wirings_constants = create_train_state_and_constants(
         model,
@@ -55,6 +50,6 @@ def main(run_id: Optional[str] = None) -> None:
         rngs,
         train_state,
         wirings_constants,
-        run_id,
+        job_id,
     ):
         print(f"{step},{loss}")

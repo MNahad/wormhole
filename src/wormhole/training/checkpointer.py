@@ -48,7 +48,7 @@ type _InnerFn = Callable[
 def enable_checkpointing(
     dir: str,
     options: Optional[ocp.CheckpointManagerOptions] = None,
-    default_run_id: str = datetime.now(timezone.utc).isoformat(
+    default_job_id: str = datetime.now(timezone.utc).isoformat(
         timespec="seconds"
     ),
 ) -> Callable[[_InnerFn], _OuterFn]:
@@ -56,9 +56,9 @@ def enable_checkpointing(
     def checkpointer(fn: _InnerFn) -> _OuterFn:
 
         @wraps(fn)
-        def wrapper(dataset, rngs, state, constants, run_id):
+        def wrapper(dataset, rngs, state, constants, job_id):
             ckpt_path = path.abspath(
-                path.join(dir, run_id if run_id else default_run_id)
+                path.join(dir, job_id if job_id else default_job_id)
             )
             with ocp.CheckpointManager(
                 path.join(ckpt_path, "constants"),
@@ -69,11 +69,7 @@ def enable_checkpointing(
                     ocp.args.StandardRestore(_pytree_to_abstract(constants)),
                 )
                 if restored_constants is None:
-                    _save(
-                        constants_mngr,
-                        0,
-                        ocp.args.StandardSave(constants),
-                    )
+                    _save(constants_mngr, 0, ocp.args.StandardSave(constants))
                 else:
                     constants = restored_constants[1]
             with ocp.CheckpointManager(
