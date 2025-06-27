@@ -56,13 +56,13 @@ def defaults() -> dict:
         "training": {
             "splits": {
                 "train": 0.5,
-                "test": 0.3,
-                "eval": 0.2,
+                "validation": 0.3,
+                "test": 0.2,
             },
             "allowed_labels_by_split": {
                 "train": [True, False],
+                "validation": [True, False],
                 "test": [True, False],
-                "eval": [True, False],
             },
             "batch_size": 10,
             "num_epochs": 10,

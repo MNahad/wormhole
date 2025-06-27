@@ -24,8 +24,8 @@ type _ReturnType = Iterator[
 
 type _OuterFn = Callable[
     [
-        Iterator[LightCurve],
         dict[str, Array],
+        Iterator[LightCurve],
         train_state.TrainState,
         flax.core.FrozenDict,
         Optional[str],
@@ -35,8 +35,8 @@ type _OuterFn = Callable[
 
 type _InnerFn = Callable[
     [
-        Iterator[LightCurve],
         dict[str, Array],
+        Iterator[LightCurve],
         train_state.TrainState,
         flax.core.FrozenDict,
         int,
@@ -56,7 +56,7 @@ def enable_checkpointing(
     def checkpointer(fn: _InnerFn) -> _OuterFn:
 
         @wraps(fn)
-        def wrapper(dataset, rngs, state, constants, job_id):
+        def wrapper(rngs, dataset, state, constants, job_id):
             ckpt_path = path.abspath(
                 path.join(dir, job_id if job_id else default_job_id)
             )
@@ -91,7 +91,7 @@ def enable_checkpointing(
                     restored_composite = restored[1]
                     dataset = restored_composite["loader"]
                     state = restored_composite["state"]
-                for next_iter in fn(dataset, rngs, state, constants, step):
+                for next_iter in fn(rngs, dataset, state, constants, step):
                     mngr.wait_until_finished()
                     _save(
                         mngr,
@@ -110,6 +110,32 @@ def enable_checkpointing(
     return checkpointer
 
 
+def restore_train_state_and_constants(
+    checkpoint_dir: str,
+    job_id: str,
+    constants: Array,
+    state: Array,
+) -> tuple[train_state.TrainState, flax.core.FrozenDict]:
+    restored_state, restored_constants = None, None
+    with ocp.CheckpointManager(
+        path.abspath(path.join(checkpoint_dir, job_id, "constants"))
+    ) as constants_mngr:
+        restored_constants = constants_mngr.restore(
+            constants_mngr.latest_step(),
+            args=ocp.args.StandardRestore(_pytree_to_abstract(constants)),
+        )
+    with ocp.CheckpointManager(
+        path.abspath(path.join(checkpoint_dir, job_id, "checkpoint"))
+    ) as mngr:
+        restored_state = mngr.restore(
+            mngr.latest_step(),
+            args=ocp.args.Composite(
+                state=ocp.args.StandardRestore(_pytree_to_abstract(state))
+            ),
+        )["state"]
+    return (restored_state, restored_constants)
+
+
 def _save(
     mngr: ocp.CheckpointManager,
     step: int,
@@ -121,7 +147,7 @@ def _save(
 def _restore(
     mngr: ocp.CheckpointManager,
     restore_args=ocp.args.CheckpointArgs,
-) -> Optional[tuple[int, Mapping]]:
+) -> Optional[tuple[int, Array]]:
     latest_step = mngr.latest_step()
     return (
         (

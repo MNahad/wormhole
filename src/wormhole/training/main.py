@@ -4,16 +4,60 @@
 from os import path
 from typing import Optional
 
+import flax.core
+from flax.training import train_state
 import jax
+from jax import Array
 import optax
 
 from wormhole.config import config
+from wormhole.dataset import LightCurve
+from .evaluator import eval
 from .loader import get_dataloader, get_sample_dataloader
 from .model_gen import get_models
 from .trainer import create_train_state_and_constants, train
 
 
-def run(job_id: Optional[str] = None) -> None:
+def run(
+    job_id: Optional[str] = None,
+    *,
+    mode: Optional[str] = "train",
+) -> None:
+    _train(job_id) if mode == "train" else _eval(job_id if job_id else "")
+
+
+def _train(job_id: Optional[str] = None) -> None:
+    (rngs, (train_dataset, _, _), train_state, wirings_constants) = _prep()
+    print("STEP,LOSS")
+    for (step, loss), _ in train(
+        rngs,
+        iter(train_dataset),
+        train_state,
+        wirings_constants,
+        job_id,
+    ):
+        print(f"{step},{loss}")
+
+
+def _eval(job_id: str) -> None:
+    (rngs, (_, _, test_dataset), train_state, wirings_constants) = _prep()
+    print("PREDICTED,TRUE")
+    for predicted, true in eval(
+        rngs,
+        iter(test_dataset),
+        train_state,
+        wirings_constants,
+        job_id,
+    ):
+        print(f"{predicted},{true}")
+
+
+def _prep() -> tuple[
+    dict[str, Array],
+    tuple[LightCurve, ...],
+    train_state.TrainState,
+    flax.core.FrozenDict,
+]:
     training_conf = config()["training"]
     gold_dir = path.join(
         *(
@@ -21,10 +65,10 @@ def run(job_id: Optional[str] = None) -> None:
             + config()["data"]["catalogue"]["gold"]["path"]
         )
     )
-    train_dataset, test_dataset, _ = get_dataloader(
+    datasets = get_dataloader(
         gold_dir,
         gold_dir,
-        ("train", "test", "eval"),
+        training_conf["splits"].keys(),
         splits=training_conf["splits"],
         batch_size=training_conf["batch_size"],
         num_epochs=training_conf["num_epochs"],
@@ -44,12 +88,4 @@ def run(job_id: Optional[str] = None) -> None:
         optax.adam(training_conf["hyperparameters"]["adam"]),
         next(iter(sample_dataloader)),
     )
-    print("STEP,LOSS")
-    for (step, loss), _ in train(
-        iter(train_dataset),
-        rngs,
-        train_state,
-        wirings_constants,
-        job_id,
-    ):
-        print(f"{step},{loss}")
+    return (rngs, datasets, train_state, wirings_constants)

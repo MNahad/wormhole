@@ -24,8 +24,8 @@ from .checkpointer import enable_checkpointing
     ),
 )
 def train(
-    dataset: Iterator[LightCurve],
     rngs: dict[str, Array],
+    dataset: Iterator[LightCurve],
     state: train_state.TrainState,
     wirings_constants: flax.core.FrozenDict,
     step: int,
@@ -61,26 +61,42 @@ def create_train_state_and_constants(
 
 
 @jax.jit
+def loss_fn(
+    params: flax.core.FrozenDict,
+    state: train_state.TrainState,
+    lcs: LightCurve,
+    wirings_constants: flax.core.FrozenDict,
+    rngs: dict[str, Array],
+) -> tuple[Array, Array]:
+    logits = state.apply_fn(
+        {"params": params, "wirings_constants": wirings_constants},
+        lcs[0],
+        rngs=rngs,
+        seq_lengths=lcs[2],
+    )
+    logits_reshaped = logits.reshape(lcs[0].shape[0])
+    labels_reshaped = lcs[1].reshape(lcs[0].shape[0])
+    loss = optax.sigmoid_binary_cross_entropy(
+        logits_reshaped,
+        labels_reshaped,
+    ).mean()
+    return loss, logits_reshaped
+
+
+@jax.jit
 def _train(
     state: train_state.TrainState,
     lcs: LightCurve,
     wirings_constants: flax.core.FrozenDict,
     rngs: dict[str, Array],
 ) -> tuple[train_state.TrainState, Array]:
-
-    def loss_fn(params):
-        outputs = state.apply_fn(
-            {"params": params, "wirings_constants": wirings_constants},
-            lcs[0],
-            rngs=rngs,
-            seq_lengths=lcs[2],
-        )
-        return optax.sigmoid_binary_cross_entropy(
-            outputs.reshape(lcs[0].shape[0]),
-            lcs[1].reshape(lcs[0].shape[0]),
-        ).mean()
-
-    grad_fn = jax.value_and_grad(loss_fn)
-    loss, grads = grad_fn(state.params)
+    grad_fn = jax.value_and_grad(loss_fn, 0, has_aux=True)
+    (loss, _), grads = grad_fn(
+        state.params,
+        state,
+        lcs,
+        wirings_constants,
+        rngs,
+    )
     state = state.apply_gradients(grads=grads)
     return state, loss

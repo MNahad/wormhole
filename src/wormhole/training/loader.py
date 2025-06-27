@@ -1,13 +1,15 @@
 # Copyright 2024-2025 Mohammed Nawabuddin
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Iterable
+
 from wormhole.dataset import LightCurveDataLoader
 
 
 def get_dataloader(
     manifest_dir: str,
     lc_dir: str,
-    split_keys: tuple[str, ...],
+    split_keys: Iterable[str],
     *,
     splits: dict[str, float],
     batch_size: int,
