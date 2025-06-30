@@ -4,16 +4,35 @@
 from functools import partial
 from os import path
 import shutil
+from typing import Optional
 
 from wormhole.config import config
 
 
-def use_tmp_dir() -> None:
+def use_tmp_dir(mode: Optional[str] = None) -> None:
     conf = config()
     bronze_dir = conf["data"]["catalogue"]["bronze"]["path"]
     silver_dir = conf["data"]["catalogue"]["silver"]["path"]
     gold_dir = conf["data"]["catalogue"]["gold"]["path"]
     copytree = partial(shutil.copytree, dirs_exist_ok=True)
+    if mode == "train":
+        copytree(
+            "tests/data_baseline/lc",
+            path.join(
+                "tmp/data",
+                *gold_dir,
+                *conf["data"]["catalogue"]["lc"]["path"],
+            ),
+        )
+        copytree(
+            "tests/data_baseline/lc_manifest",
+            path.join(
+                "tmp/data",
+                *gold_dir,
+                *conf["data"]["catalogue"]["lc_manifest"]["path"],
+            ),
+        )
+        return
     copytree(
         "tests/data_input/bulk_lc",
         path.join(

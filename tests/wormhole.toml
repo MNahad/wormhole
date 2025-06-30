@@ -1,2 +1,16 @@
+[data.catalogue]
+path = ["tmp", "data"]
+
 [pipelines.args]
 tce_sample_ratio = [1, 1]
+
+[training]
+batch_size = 1
+num_epochs = 1
+
+[training.hyperparameters.models.basic]
+units = 6
+
+[checkpoints]
+path = ["tmp", "checkpoints"]
+save_interval_steps = 1
