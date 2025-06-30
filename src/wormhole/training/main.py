@@ -7,12 +7,12 @@ from typing import Optional
 import flax.core
 from flax.training import train_state
 import jax
-from jax import Array
+from jax import Array, numpy as jnp
 import optax
 
 from wormhole.config import config
 from wormhole.dataset import LightCurve
-from .evaluator import eval
+from .evaluator import eval, get_metrics
 from .loader import get_dataloader, get_sample_dataloader
 from .model_gen import get_models
 from .trainer import create_train_state_and_constants, train
@@ -41,15 +41,32 @@ def _train(job_id: Optional[str] = None) -> None:
 
 def _eval(job_id: str) -> None:
     (rngs, (_, _, test_dataset), train_state, wirings_constants) = _prep()
-    print("PREDICTED,TRUE")
-    for predicted, true in eval(
+    tps, tns, fps, fns = jnp.array(0), jnp.array(0), jnp.array(0), jnp.array(0)
+    step = 0
+    print(
+        "STEP,TRUE_POSITIVE,TRUE_NEGATIVE,FALSE_POSITIVE,FALSE_NEGATIVE,ACCURACY,PRECISION,RECALL,FALSEALARM"
+    )
+    for _, (tp, tn, fp, fn) in eval(
         rngs,
         iter(test_dataset),
         train_state,
         wirings_constants,
         job_id,
     ):
-        print(f"{predicted},{true}")
+        tps += tp
+        tns += tn
+        fps += fp
+        fns += fn
+        step += 1
+        accuracy, precision, recall, false_alarm = get_metrics(
+            tps,
+            tns,
+            fps,
+            fns,
+        )
+        print(
+            f"{step},{tps},{tns},{fps},{fns},{accuracy},{precision},{recall},{false_alarm}"
+        )
 
 
 def _prep() -> tuple[

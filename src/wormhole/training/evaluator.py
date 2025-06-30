@@ -7,7 +7,8 @@ from typing import Iterator
 import flax.core
 from flax.training import train_state
 from flax import linen as nn
-from jax import Array
+import jax
+from jax import Array, numpy as jnp
 
 from wormhole.config import config
 from wormhole.dataset import LightCurve
@@ -21,7 +22,7 @@ def eval(
     initial_state: train_state.TrainState,
     initial_wirings_constants: flax.core.FrozenDict,
     job_id: str,
-) -> Iterator[tuple[Array, Array]]:
+) -> Iterator[tuple[tuple[Array, Array], tuple[Array, Array, Array, Array]]]:
     restored = restore_train_state_and_constants(
         path.join(*config()["checkpoints"]["path"]),
         job_id,
@@ -38,8 +39,35 @@ def eval(
             wirings_constants,
             rngs,
         )
-        yield _sigmoid(logits) > 0.5, lcs[1]
+        prediction = nn.sigmoid(logits) > 0.5
+        yield (prediction, lcs[1]), _get_confusion_matrix(prediction, lcs[1])
 
 
-def _sigmoid(logits: Array) -> Array:
-    return nn.sigmoid(logits)
+@jax.jit
+def get_metrics(
+    tp: Array,
+    tn: Array,
+    fp: Array,
+    fn: Array,
+) -> tuple[Array, Array, Array, Array]:
+    return (
+        (tp + tn) / (tp + tn + fp + fn),
+        tp / (tp + fp),
+        tp / (tp + fn),
+        fp / (fp + tn),
+    )
+
+
+@jax.jit
+def _get_confusion_matrix(
+    prediction: Array,
+    truth: Array,
+) -> tuple[Array, Array, Array, Array]:
+    not_prediction = ~prediction
+    not_truth = ~truth
+    return (
+        jnp.sum(prediction & truth),
+        jnp.sum(not_prediction & not_truth),
+        jnp.sum(prediction & not_truth),
+        jnp.sum(not_prediction & truth),
+    )

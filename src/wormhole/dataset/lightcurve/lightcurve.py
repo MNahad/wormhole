@@ -55,7 +55,10 @@ class _DataSource:
             model.Data(
                 npz.read(
                     path.join(
-                        self.lc_dir, self._lc_path, sector, ticid + ".npz"
+                        self.lc_dir,
+                        self._lc_path,
+                        sector,
+                        ticid + ".npz",
                     )
                 )
             ),
