@@ -1,0 +1,19 @@
+name: Test
+on:
+  push:
+    branches:
+    - main
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Install
+      run: pip install --user -U -r requirements.lock.txt && pip install --user -U .
+    - name: Run integration tests
+      run: WORMHOLE_CONFIG=tests/wormhole.toml python -m unittest
