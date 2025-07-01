@@ -5,6 +5,8 @@
 
 This repository contains a Flaxoil model trainer capable of classifying exoplanets in the TESS Lightcurve dataset.
 
+It has been designed with resource-constrained or edge-based environments in mind. It can be run on CPU-centric devices and has low memory requirements. It has been tested in a 4 CPU 8 GB Docker container on a single Apple Silicon MacBook Pro.
+
 # What is TESS?
 
 The [Transiting Exoplanet Survey Satellite](https://en.wikipedia.org/wiki/Transiting_Exoplanet_Survey_Satellite) was launched on 18 April 2018 on an MIT-Led NASA all-sky survey mission to detect transiting exoplanets.
@@ -144,10 +146,10 @@ STEP,TRUE_POSITIVE,TRUE_NEGATIVE,FALSE_POSITIVE,FALSE_NEGATIVE,ACCURACY,PRECISIO
 followed by a stream of CSV lines, one per step. Example:
 
 ```txt
-80,2413,3588,393,1606,0.750124990940094,0.8599429726600647,0.6003981232643127,0.09871891140937805
+80,2656,3422,559,1363,0.7597500085830688,0.8261275291442871,0.6608608961105347,0.1404169797897339
 ```
 
-In this example, the model was evaluated to have an accuracy of 75.0%, a high precision of 86.0%, a low recall of 60.0%, and a very low false alarm rate of 9.87%.
+This is an example of a model with 11 LTC cell units trained on a 50% training split from 40,000 evenly-labelled samples, and an Adam learning rate of 0.01, with a batch size of 1, for 2 epochs. It was evaluated on a 20% test split and had an accuracy of 76.0%, a high precision of 82.6%, a low recall of 66.1%, and a very low false alarm rate of 14.0%.
 
 # Configuration options
 
